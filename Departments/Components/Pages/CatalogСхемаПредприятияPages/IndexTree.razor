@@ -1,0 +1,104 @@
+﻿@page "/catalogсхемапредприятияs/tree"
+
+@using Departments.Components.ComponentTreeView
+@using Departments.Data
+@using Departments.Domain
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.EntityFrameworkCore
+
+@implements IAsyncDisposable
+
+@inject IDbContextFactory<Departments.Data.AppDbContext> DbFactory
+
+<h3>Схема Предприятия</h3>
+<hr />
+<div class="row">
+    <div class="col">
+        <div class="overflow-auto" style="max-height: 800px;">
+            <TreeView TreeItems="treeItems">
+                <TreeItemTemplate Context="treeItem">
+                    <div class="d-flex flex-row @(treeItem == selectedTreeItem ? "bg-body-secondary" : string.Empty)">
+                        <div class="btn" @onclick="() => ExpandItem(treeItem)">
+                            <TreeIcons TreeItem="treeItem" />
+                        </div>
+                        <div class="btn text-start" @onclick="() => SelectItem(treeItem)">@treeItem.Value</div>
+                    </div>
+                </TreeItemTemplate>
+            </TreeView>
+        </div>
+    </div>
+    <div class="col">
+        <div class="overflow-auto" style="max-height: 800px;">
+            @* <div class="position-fixed"> *@
+                @if (selectedTreeItem != null)
+                {
+                    @* <div class="card shadow-sm overflow-auto" style="max-height: 800px;">
+                        <div class="card-body"> *@
+                            <div><b>@selectedTreeItem.Value</b></div>
+                            <QuickGrid Class="table"
+                                       Items="context.CatalogПользователи.Where(e => !e.DeletionMark && e.Доброга_СхемаПредприятия_Key == selectedTreeItem.Id)">
+                                <PropertyColumn Property="catalogпользователи => catalogпользователи.Description" Title="" />
+                                <TemplateColumn Context="catalogпользователи">
+                                    <a href="@($"catalogпользователиs/edit?ref_key={catalogпользователи.Ref_Key}")">Переместить</a>
+                                </TemplateColumn>
+                            </QuickGrid>
+                        @* </div>
+                    </div> *@
+                }
+            @* </div> *@
+        </div>
+    </div>
+</div>
+
+
+
+@code {
+    private AppDbContext context = default!;
+    private List<TreeItem>? treeItems;
+    private TreeItem? selectedTreeItem;
+
+    protected override async Task OnInitializedAsync()
+    {
+        context = DbFactory.CreateDbContext();
+
+        await GetTreeItems();
+    }
+
+    private async Task GetTreeItems()
+    {
+        var originalItems = await context.CatalogСхемаПредприятия
+        .AsNoTracking()
+        .Where(e => e.DeletionMark == false)
+        .OrderBy(e => e.Description)
+        .ToListAsync();
+
+        var list = From(originalItems);
+
+        treeItems = TreeBuilder.Build(list);
+    }
+
+    private List<TreeItem> From(List<CatalogСхемаПредприятия> originalItems)
+    {
+        var list = originalItems.Select(e => new TreeItem
+            {
+                Id = e.Ref_Key,
+                Value = e.Description,
+                IsFolder = true,
+                ParentId = e.Parent_Key
+            }).ToList();
+
+        return list;
+    }
+
+    private void ExpandItem(TreeItem treeItem)
+    {
+        treeItem.IsExpanded = !treeItem.IsExpanded;
+    }
+
+    private void SelectItem(TreeItem treeItem)
+    {
+        selectedTreeItem = treeItem;
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

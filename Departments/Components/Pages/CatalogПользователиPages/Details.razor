@@ -1,0 +1,54 @@
+﻿@page "/catalogпользователиs/details"
+@using Microsoft.EntityFrameworkCore
+@using Departments.Domain
+@inject IDbContextFactory<Departments.Data.AppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>CatalogПользователи</h2>
+    <hr />
+    @if (catalogпользователи is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">DeletionMark</dt>
+            <dd class="col-sm-10">@catalogпользователи.DeletionMark</dd>
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@catalogпользователи.Description</dd>
+            <dt class="col-sm-2">Подразделение_Key</dt>
+            <dd class="col-sm-10">@catalogпользователи.Подразделение_Key</dd>
+            <dt class="col-sm-2">Доброга_СхемаПредприятия_Key</dt>
+            <dd class="col-sm-10">@catalogпользователи.Доброга_СхемаПредприятия_Key</dd>
+            <dt class="col-sm-2">Должность</dt>
+            <dd class="col-sm-10">@catalogпользователи.Должность</dd>
+        </dl>
+        <div>
+            <a href="@($"/catalogпользователиs/edit?ref_key={catalogпользователи.Ref_Key}")">Edit</a> |
+            <a href="@($"/catalogпользователиs")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private CatalogПользователи? catalogпользователи;
+
+    [SupplyParameterFromQuery]
+    private string Ref_Key { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        catalogпользователи = await context.CatalogПользователи.FirstOrDefaultAsync(m => m.Ref_Key == Ref_Key);
+
+        if (catalogпользователи is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

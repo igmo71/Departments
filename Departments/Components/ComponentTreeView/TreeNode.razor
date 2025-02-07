@@ -1,0 +1,34 @@
+﻿@if (TreeItem != null)
+{
+    <li class="list-group-item border-0 pe-0 pb-0">
+
+        <div @onmouseover="SetBgColor" @onmouseout="ResetBgColor">
+            <div class="@bgColor">
+                @TreeItemTemplate(TreeItem)
+            </div>
+        </div>
+
+        @if (TreeItem.IsExpanded && TreeItem.HasChildren)
+        {
+            <ul class="list-group">
+                @foreach (var child in TreeItem.Children!)
+                {
+                    <TreeNode TreeItem="child" TreeItemTemplate="TreeItemTemplate" />
+                }
+            </ul>
+        }
+    </li>
+}
+@code {
+    [Parameter]
+    public TreeItem? TreeItem { get; set; }
+
+    [Parameter]
+    public RenderFragment<TreeItem> TreeItemTemplate { get; set; } = default!;
+
+    private string bgColor = string.Empty;
+
+    private void SetBgColor() => bgColor = "bg-body-tertiary";
+
+    private void ResetBgColor() => bgColor = string.Empty;
+}

@@ -1,0 +1,109 @@
+﻿@page "/catalogпользователиs/edit"
+@using Microsoft.EntityFrameworkCore
+@using Departments.Domain
+@inject IDbContextFactory<Departments.Data.AppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>CatalogПользователи</h2>
+<hr />
+@if (CatalogПользователи is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="CatalogПользователи" OnValidSubmit="UpdateCatalogПользователи" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="CatalogПользователи.Ref_Key" value="@CatalogПользователи.Ref_Key" />
+                <div class="mb-3">
+                    <label for="deletionmark" class="form-label">DeletionMark:</label>
+                    <InputCheckbox id="deletionmark" @bind-Value="CatalogПользователи.DeletionMark" class="form-check-input" />
+                    <ValidationMessage For="() => CatalogПользователи.DeletionMark" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description:</label>
+                    <InputText id="description" @bind-Value="CatalogПользователи.Description" class="form-control" />
+                    <ValidationMessage For="() => CatalogПользователи.Description" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="подразделение_key" class="form-label">Подразделение_Key:</label>
+                    <InputText id="подразделение_key" @bind-Value="CatalogПользователи.Подразделение_Key" class="form-control" />
+                    <ValidationMessage For="() => CatalogПользователи.Подразделение_Key" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="доброга_схемапредприятия_key" class="form-label">Доброга_СхемаПредприятия_Key:</label>
+                    <InputText id="доброга_схемапредприятия_key" @bind-Value="CatalogПользователи.Доброга_СхемаПредприятия_Key" class="form-control" />
+                    <ValidationMessage For="() => CatalogПользователи.Доброга_СхемаПредприятия_Key" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="должность" class="form-label">Должность:</label>
+                    <InputText id="должность" @bind-Value="CatalogПользователи.Должность" class="form-control" />
+                    <ValidationMessage For="() => CatalogПользователи.Должность" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/catalogпользователиs">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private string Ref_Key { get; set; }
+
+    [SupplyParameterFromForm]
+    private CatalogПользователи? CatalogПользователи { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        CatalogПользователи ??= await context.CatalogПользователи.FirstOrDefaultAsync(m => m.Ref_Key == Ref_Key);
+
+        if (CatalogПользователи is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateCatalogПользователи()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(CatalogПользователи!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!CatalogПользователиExists(CatalogПользователи!.Ref_Key))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/catalogпользователиs");
+    }
+
+    private bool CatalogПользователиExists(string ref_key)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.CatalogПользователи.Any(e => e.Ref_Key == ref_key);
+    }
+}

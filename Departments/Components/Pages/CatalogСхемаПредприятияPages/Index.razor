@@ -1,0 +1,38 @@
+﻿@page "/catalogсхемапредприятияs"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Departments.Domain
+@using Departments.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<Departments.Data.AppDbContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="catalogсхемапредприятияs/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.CatalogСхемаПредприятия">
+    <PropertyColumn Property="catalogсхемапредприятия => catalogсхемапредприятия.DeletionMark" />
+    <PropertyColumn Property="catalogсхемапредприятия => catalogсхемапредприятия.Parent_Key" />
+    <PropertyColumn Property="catalogсхемапредприятия => catalogсхемапредприятия.Description" />
+
+    <TemplateColumn Context="catalogсхемапредприятия">
+        <a href="@($"catalogсхемапредприятияs/edit?ref_key={catalogсхемапредприятия.Ref_Key}")">Edit</a> |
+        <a href="@($"catalogсхемапредприятияs/details?ref_key={catalogсхемапредприятия.Ref_Key}")">Details</a> |
+        <a href="@($"catalogсхемапредприятияs/delete?ref_key={catalogсхемапредприятия.Ref_Key}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private AppDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

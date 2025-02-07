@@ -1,0 +1,64 @@
+﻿@page "/catalogпользователиs/create"
+@using Microsoft.EntityFrameworkCore
+@using Departments.Domain
+@inject IDbContextFactory<Departments.Data.AppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>CatalogПользователи</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="CatalogПользователи" OnValidSubmit="AddCatalogПользователи" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="deletionmark" class="form-label">DeletionMark:</label> 
+                <InputCheckbox id="deletionmark" @bind-Value="CatalogПользователи.DeletionMark" class="form-check-input" /> 
+                <ValidationMessage For="() => CatalogПользователи.DeletionMark" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="description" class="form-label">Description:</label> 
+                <InputText id="description" @bind-Value="CatalogПользователи.Description" class="form-control" /> 
+                <ValidationMessage For="() => CatalogПользователи.Description" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="подразделение_key" class="form-label">Подразделение_Key:</label> 
+                <InputText id="подразделение_key" @bind-Value="CatalogПользователи.Подразделение_Key" class="form-control" /> 
+                <ValidationMessage For="() => CatalogПользователи.Подразделение_Key" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="доброга_схемапредприятия_key" class="form-label">Доброга_СхемаПредприятия_Key:</label> 
+                <InputText id="доброга_схемапредприятия_key" @bind-Value="CatalogПользователи.Доброга_СхемаПредприятия_Key" class="form-control" /> 
+                <ValidationMessage For="() => CatalogПользователи.Доброга_СхемаПредприятия_Key" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="должность" class="form-label">Должность:</label> 
+                <InputText id="должность" @bind-Value="CatalogПользователи.Должность" class="form-control" /> 
+                <ValidationMessage For="() => CatalogПользователи.Должность" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/catalogпользователиs">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private CatalogПользователи CatalogПользователи { get; set; } = new(){Ref_Key = Guid.CreateVersion7().ToString()};
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddCatalogПользователи()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.CatalogПользователи.Add(CatalogПользователи);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/catalogпользователиs");
+    }
+}
