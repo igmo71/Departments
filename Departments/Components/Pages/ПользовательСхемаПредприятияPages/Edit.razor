@@ -1,0 +1,89 @@
+﻿@page "/пользовательсхемапредприятияs/edit"
+@using Microsoft.EntityFrameworkCore
+@using Departments.Domain
+@inject IDbContextFactory<Departments.Data.AppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Переместить</PageTitle>
+
+<h2>Переместить</h2>
+
+<h4>Пользователя в другое Подразделение Схемы Предприятия</h4>
+<hr />
+@if (ПользовательСхемаПредприятия is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="ПользовательСхемаПредприятия" OnValidSubmit="UpdateПользовательСхемаПредприятия" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="ПользовательСхемаПредприятия.Пользователь_Key" value="@ПользовательСхемаПредприятия.Пользователь_Key" />
+                <div class="mb-3">
+                    <label for="схемапредприятия_key" class="form-label">СхемаПредприятия_Key:</label>
+                    <InputText id="схемапредприятия_key" @bind-Value="ПользовательСхемаПредприятия.СхемаПредприятия_Key" class="form-control" />
+                    <ValidationMessage For="() => ПользовательСхемаПредприятия.СхемаПредприятия_Key" class="text-danger" />
+                </div>                
+                <div>
+                    <button type="submit" class="btn btn-primary">Сохранить</button> |
+                    <a href="/catalogсхемапредприятияs/tree">Назад к Списку</a>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [SupplyParameterFromQuery]
+    private string? Пользователь_Key { get; set; }
+
+    [SupplyParameterFromForm]
+    private ПользовательСхемаПредприятия? ПользовательСхемаПредприятия { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        ПользовательСхемаПредприятия ??= await context.ПользователиСхемаПредприятия.FirstOrDefaultAsync(m => m.Пользователь_Key == Пользователь_Key);
+
+        if (ПользовательСхемаПредприятия is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+
+
+    }
+
+    
+    private async Task UpdateПользовательСхемаПредприятия()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(ПользовательСхемаПредприятия!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!ПользовательСхемаПредприятияExists(ПользовательСхемаПредприятия!.Пользователь_Key))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/catalogсхемапредприятияs/tree");
+    }
+
+    private bool ПользовательСхемаПредприятияExists(string пользователь_key)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.ПользователиСхемаПредприятия.Any(e => e.Пользователь_Key == пользователь_key);
+    }
+}

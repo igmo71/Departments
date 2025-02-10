@@ -1,0 +1,46 @@
+﻿@page "/пользовательсхемапредприятияs/details"
+@using Microsoft.EntityFrameworkCore
+@using Departments.Domain
+@inject IDbContextFactory<Departments.Data.AppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h2>Details</h2>
+
+<div>
+    <h4>ПользовательСхемаПредприятия</h4>
+    <hr />
+    @if (пользовательсхемапредприятия is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">СхемаПредприятия_Key</dt>
+            <dd class="col-sm-10">@пользовательсхемапредприятия.СхемаПредприятия_Key</dd>
+        </dl>
+        <div>
+            <a href="@($"/пользовательсхемапредприятияs/edit?пользователь_key={пользовательсхемапредприятия.Пользователь_Key}")">Edit</a> |
+            <a href="@($"/пользовательсхемапредприятияs")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private ПользовательСхемаПредприятия? пользовательсхемапредприятия;
+
+    [SupplyParameterFromQuery]
+    private string Пользователь_Key { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        пользовательсхемапредприятия = await context.ПользователиСхемаПредприятия.FirstOrDefaultAsync(m => m.Пользователь_Key == Пользователь_Key);
+
+        if (пользовательсхемапредприятия is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

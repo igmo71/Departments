@@ -1,0 +1,95 @@
+﻿@page "/пользовательсхемапредприятияs/create"
+@using Microsoft.EntityFrameworkCore
+@using Departments.Domain
+@inject IDbContextFactory<Departments.Data.AppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Добавить</PageTitle>
+
+<h2>Добавить</h2>
+
+<h4>Пользователя в Схему Предприятия</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="ПользовательСхемаПредприятия" OnValidSubmit="AddПользовательСхемаПредприятия" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert" />
+            <div class="mb-3">
+                <label for="схемапредприятия_key" class="form-label">Схема Предприятия:</label>
+                <input type="text" id="схемапредприятия_key" value="@currentСхемаПредприятия?.Description" class="form-control" disabled />
+                <ValidationMessage For="() => ПользовательСхемаПредприятия.СхемаПредприятия_Key" class="text-danger" />
+            </div>
+            @if (unusedПользователи != null)
+            {
+                <label for="user_key" class="form-label">Пользователь:</label>
+                <InputSelect id="user_key" @bind-Value="ПользовательСхемаПредприятия.Пользователь_Key" class="form-select mb-3">
+                    <option value="">- Выберите -</option>
+                    @foreach (var item in unusedПользователи)
+                    {
+                        <option value="@item.Ref_Key">@item.Description</option>
+                    }
+                </InputSelect>
+            }
+            <div>
+                <button type="submit" class="btn btn-primary" disabled="@(unusedПользователи == null)">Добавить</button> |
+                <a href="/catalogсхемапредприятияs/tree">Назад к Списку</a>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? СхемаПредприятия_Key { get; set; }
+
+    [SupplyParameterFromForm]
+    private ПользовательСхемаПредприятия ПользовательСхемаПредприятия { get; set; } = new();
+
+    private CatalogСхемаПредприятия? currentСхемаПредприятия;
+    private List<CatalogПользователи>? unusedПользователи;
+
+    protected override void OnInitialized()
+    {
+        ПользовательСхемаПредприятия.СхемаПредприятия_Key = СхемаПредприятия_Key;
+
+        GetCurrentСхемаПредприятия();
+
+        GetUnusedПользователи();
+    }
+
+    private void GetCurrentСхемаПредприятия()
+    {
+        using var context = DbFactory.CreateDbContext();
+
+        currentСхемаПредприятия = context.CatalogСхемаПредприятия
+            .AsNoTracking()
+            .FirstOrDefault(e => e.Ref_Key == СхемаПредприятия_Key);
+    }
+
+    private void GetUnusedПользователи()
+    {
+        using var context = DbFactory.CreateDbContext();
+
+        var keys = context.ПользователиСхемаПредприятия
+            .AsNoTracking()
+            .Select(e => e.Пользователь_Key)
+            .ToList();
+
+        unusedПользователи = context.CatalogПользователи
+            .AsNoTracking()
+            .AsEnumerable()
+            .Where(u => !keys.Contains(u.Ref_Key))
+            .OrderBy(e => e.Description)
+            .ToList();
+    }
+
+
+    private async Task AddПользовательСхемаПредприятия()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.ПользователиСхемаПредприятия.Add(ПользовательСхемаПредприятия);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/catalogсхемапредприятияs/tree");
+    }
+}

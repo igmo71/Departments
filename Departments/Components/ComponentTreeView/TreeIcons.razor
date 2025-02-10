@@ -2,20 +2,13 @@
 
 @if (TreeItem != null)
 {
-    if (TreeItem.IsFolder)
+    if (TreeItem.IsExpanded)
     {
-        if (TreeItem.IsExpanded)
-        {
-           <Folder2OpenIcon />
-        }
-        else
-        {
-            <FolderIcon />
-        }
+        <ChevronDown />
     }
     else
     {
-       <GearWideConnectedIcon />
+        <ChevronRight />
     }
 }
 @code {

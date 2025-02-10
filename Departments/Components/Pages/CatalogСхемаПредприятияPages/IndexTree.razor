@@ -4,20 +4,22 @@
 @using Departments.Data
 @using Departments.Domain
 @using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.EntityFrameworkCore
 
 @implements IAsyncDisposable
 
 @inject IDbContextFactory<Departments.Data.AppDbContext> DbFactory
+@inject ProtectedSessionStorage ProtectedSessionStore
 
-<h3>Схема Предприятия</h3>
+<h2>Схема Предприятия</h2>
 <hr />
 <div class="row">
     <div class="col">
         <div class="overflow-auto" style="max-height: 800px;">
             <TreeView TreeItems="treeItems">
                 <TreeItemTemplate Context="treeItem">
-                    <div class="d-flex flex-row @(treeItem == selectedTreeItem ? "bg-body-secondary" : string.Empty)">
+                    <div class="d-flex flex-row @(treeItem.Id == selectedTreeItemId ? "bg-body-secondary" : string.Empty)">
                         <div class="btn" @onclick="() => ExpandItem(treeItem)">
                             <TreeIcons TreeItem="treeItem" />
                         </div>
@@ -29,31 +31,44 @@
     </div>
     <div class="col">
         <div class="overflow-auto" style="max-height: 800px;">
-            @* <div class="position-fixed"> *@
-                @if (selectedTreeItem != null)
-                {
-                    @* <div class="card shadow-sm overflow-auto" style="max-height: 800px;">
-                        <div class="card-body"> *@
-                            <div><b>@selectedTreeItem.Value</b></div>
-                            <QuickGrid Class="table"
-                                       Items="context.CatalogПользователи.Where(e => !e.DeletionMark && e.Доброга_СхемаПредприятия_Key == selectedTreeItem.Id)">
-                                <PropertyColumn Property="catalogпользователи => catalogпользователи.Description" Title="" />
-                                <TemplateColumn Context="catalogпользователи">
-                                    <a href="@($"catalogпользователиs/edit?ref_key={catalogпользователи.Ref_Key}")">Переместить</a>
-                                </TemplateColumn>
-                            </QuickGrid>
-                        @* </div>
-                    </div> *@
-                }
-            @* </div> *@
+            @if (selectedTreeItemId != null)
+            {
+                <p>
+                    <h4>@selectedTreeItem?.Value</h4>
+                </p>
+                <p>
+                    <a href="@($"/пользовательсхемапредприятияs/create?СхемаПредприятия_Key={selectedTreeItemId}")">
+                        Добавить Пользователя
+                    </a>
+                </p>
+                <QuickGrid @ref="qGrid" Class="table" Items="queryПользователиСхемаПредприятия">
+                    <PropertyColumn Property="item => item.Пользователь == null ? string.Empty : item.Пользователь.Description" Title="" />
+                    <TemplateColumn Context="item">
+                        @if (item.СхемаПредприятия != null && item.Пользователь != null)
+                        {
+                            <a href="@($"/пользовательсхемапредприятияs/edit?СхемаПредприятия_Key={item.СхемаПредприятия_Key}&Пользователь_Key={item.Пользователь.Ref_Key}")">
+                                Переместить
+                            </a>
+                            <span> | </span>
+                            <a href="@($"/пользовательсхемапредприятияs/delete?СхемаПредприятия_Key={item.СхемаПредприятия_Key}&Пользователь_Key={item.Пользователь.Ref_Key}")">
+                                Удалить
+                            </a>
+                        }
+                    </TemplateColumn>
+                </QuickGrid>
+            }
         </div>
     </div>
 </div>
 
 @code {
     private AppDbContext context = default!;
+    private IQueryable<ПользовательСхемаПредприятия>? queryПользователиСхемаПредприятия;
+    private QuickGrid<ПользовательСхемаПредприятия>? qGrid;
     private List<TreeItem>? treeItems;
     private TreeItem? selectedTreeItem;
+    private string? selectedTreeItemId;
+    private List<string>? expandedTreeItemsId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -72,7 +87,9 @@
 
         var list = From(originalItems);
 
-        treeItems = TreeBuilder.Build(list);
+        var restoredStateList = await ResoreTreeState(list);
+
+        treeItems = TreeBuilder.Build(restoredStateList);
     }
 
     private List<TreeItem> From(List<CatalogСхемаПредприятия> originalItems)
@@ -88,15 +105,79 @@
         return list;
     }
 
-    private void ExpandItem(TreeItem treeItem)
+    private async Task<List<TreeItem>> ResoreTreeState(List<TreeItem> treeItems)
+    {
+        var expandedTreeItemsResult = await ProtectedSessionStore.GetAsync<List<string>?>(nameof(expandedTreeItemsId));
+
+        if (expandedTreeItemsResult.Success)
+        {
+            expandedTreeItemsId = expandedTreeItemsResult.Value;
+
+            if (expandedTreeItemsId != null)
+            {
+                var expandedTreeItems = treeItems.Where(i => expandedTreeItemsId.Contains(i.Id));
+                foreach (var item in expandedTreeItems)
+                    item.IsExpanded = true;
+            }
+
+        }
+
+        var selectedTreeItemIdResult = await ProtectedSessionStore.GetAsync<string?>(nameof(selectedTreeItemId));
+
+        if (selectedTreeItemIdResult.Success)
+        {
+            selectedTreeItemId = selectedTreeItemIdResult.Value;
+            selectedTreeItem = treeItems.FirstOrDefault(i => i.Id == selectedTreeItemId);
+            BuildQueryПользователиСхемаПредприятия();
+        }
+
+        return treeItems;
+    }
+
+    private async Task ExpandItem(TreeItem treeItem)
     {
         treeItem.IsExpanded = !treeItem.IsExpanded;
+
+        if (treeItem.IsExpanded)
+        {
+            expandedTreeItemsId ??= [];
+            expandedTreeItemsId.Add(treeItem.Id);
+        }
+        else if (expandedTreeItemsId != null)
+        {
+            expandedTreeItemsId.Remove(treeItem.Id);
+        }
+
+        await ProtectedSessionStore.SetAsync(nameof(expandedTreeItemsId), expandedTreeItemsId);
     }
 
-    private void SelectItem(TreeItem treeItem)
+    private async Task SelectItem(TreeItem treeItem)
     {
         selectedTreeItem = treeItem;
+        selectedTreeItemId = treeItem.Id;
+
+        BuildQueryПользователиСхемаПредприятия();
+
+        await ProtectedSessionStore.SetAsync(nameof(selectedTreeItemId), selectedTreeItemId);
     }
 
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+    private void BuildQueryПользователиСхемаПредприятия()
+    {
+        queryПользователиСхемаПредприятия = context.ПользователиСхемаПредприятия
+            .AsNoTracking()
+            .Where(e => e.СхемаПредприятия_Key == selectedTreeItemId)
+            .Include(e => e.Пользователь)
+            .Include(e => e.СхемаПредприятия);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await context.DisposeAsync();
+    }
+
+    private struct TreeState
+    {
+        public List<string> expandedTreeItemsId;
+        public string selectedTreeItemId;
+    }
 }

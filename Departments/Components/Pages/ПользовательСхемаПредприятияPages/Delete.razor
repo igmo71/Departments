@@ -1,0 +1,63 @@
+﻿@page "/пользовательсхемапредприятияs/delete"
+@using Microsoft.EntityFrameworkCore
+@using Departments.Domain
+@inject IDbContextFactory<Departments.Data.AppDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Удалить</PageTitle>
+
+<h2>Удалить</h2>
+
+<p>Вы уверены, что хотите удалить?</p>
+<div>
+    <h4>Привязку Пользователя к Схеме Предприятия</h4>
+    <span>( Пользователь из справочника не удалится )</span>
+    <hr />
+    @if (пользовательсхемапредприятия is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Схема Предприятия</dt>
+            <dd class="col-sm-10">@пользовательсхемапредприятия.СхемаПредприятия?.Description</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Пользователь</dt>
+            <dd class="col-sm-10">@пользовательсхемапредприятия.Пользователь?.Description</dd>
+        </dl>
+        <EditForm method="post" Model="пользовательсхемапредприятия" OnValidSubmit="DeleteПользовательСхемаПредприятия" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(пользовательсхемапредприятия is null)">Удалить</button> |
+            <a href="/catalogсхемапредприятияs/tree">Назад у Списку</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private ПользовательСхемаПредприятия? пользовательсхемапредприятия;
+
+    [SupplyParameterFromQuery]
+    private string? Пользователь_Key { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        пользовательсхемапредприятия = await context.ПользователиСхемаПредприятия
+            .Include(e => e.Пользователь)
+            .Include(e => e.СхемаПредприятия)
+            .FirstOrDefaultAsync(m => m.Пользователь_Key == Пользователь_Key);
+
+        if (пользовательсхемапредприятия is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task DeleteПользовательСхемаПредприятия()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.ПользователиСхемаПредприятия.Remove(пользовательсхемапредприятия!);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/catalogсхемапредприятияs/tree");
+    }
+}
