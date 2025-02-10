@@ -71,7 +71,7 @@
     {
         using var context = DbFactory.CreateDbContext();
 
-        var keys = context.ПользователиСхемаПредприятия
+        var keys = context.ПользовательСхемаПредприятия
             .AsNoTracking()
             .Select(e => e.Пользователь_Key)
             .ToList();
@@ -88,7 +88,7 @@
     private async Task AddПользовательСхемаПредприятия()
     {
         using var context = DbFactory.CreateDbContext();
-        context.ПользователиСхемаПредприятия.Add(ПользовательСхемаПредприятия);
+        context.ПользовательСхемаПредприятия.Add(ПользовательСхемаПредприятия);
         await context.SaveChangesAsync();
         NavigationManager.NavigateTo("/catalogсхемапредприятияs/tree");
     }

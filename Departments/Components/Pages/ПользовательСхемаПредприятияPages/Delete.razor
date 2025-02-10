@@ -42,7 +42,7 @@
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        пользовательсхемапредприятия = await context.ПользователиСхемаПредприятия
+        пользовательсхемапредприятия = await context.ПользовательСхемаПредприятия
             .Include(e => e.Пользователь)
             .Include(e => e.СхемаПредприятия)
             .FirstOrDefaultAsync(m => m.Пользователь_Key == Пользователь_Key);
@@ -56,7 +56,7 @@
     private async Task DeleteПользовательСхемаПредприятия()
     {
         using var context = DbFactory.CreateDbContext();
-        context.ПользователиСхемаПредприятия.Remove(пользовательсхемапредприятия!);
+        context.ПользовательСхемаПредприятия.Remove(пользовательсхемапредприятия!);
         await context.SaveChangesAsync();
         NavigationManager.NavigateTo("/catalogсхемапредприятияs/tree");
     }

@@ -12,7 +12,7 @@ namespace Departments.Data
 
         public DbSet<CatalogСхемаПредприятия> CatalogСхемаПредприятия { get; set; } = default!;
         public DbSet<CatalogПользователи> CatalogПользователи { get; set; } = default!;
-        public DbSet<ПользовательСхемаПредприятия> ПользователиСхемаПредприятия { get; set; }
+        public DbSet<ПользовательСхемаПредприятия> ПользовательСхемаПредприятия { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

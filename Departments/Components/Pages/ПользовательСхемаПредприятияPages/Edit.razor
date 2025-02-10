@@ -46,7 +46,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        ПользовательСхемаПредприятия ??= await context.ПользователиСхемаПредприятия.FirstOrDefaultAsync(m => m.Пользователь_Key == Пользователь_Key);
+        ПользовательСхемаПредприятия ??= await context.ПользовательСхемаПредприятия.FirstOrDefaultAsync(m => m.Пользователь_Key == Пользователь_Key);
 
         if (ПользовательСхемаПредприятия is null)
         {
@@ -84,6 +84,6 @@ else
     private bool ПользовательСхемаПредприятияExists(string пользователь_key)
     {
         using var context = DbFactory.CreateDbContext();
-        return context.ПользователиСхемаПредприятия.Any(e => e.Пользователь_Key == пользователь_key);
+        return context.ПользовательСхемаПредприятия.Any(e => e.Пользователь_Key == пользователь_key);
     }
 }

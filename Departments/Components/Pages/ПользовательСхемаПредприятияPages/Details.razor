@@ -36,7 +36,7 @@
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        пользовательсхемапредприятия = await context.ПользователиСхемаПредприятия.FirstOrDefaultAsync(m => m.Пользователь_Key == Пользователь_Key);
+        пользовательсхемапредприятия = await context.ПользовательСхемаПредприятия.FirstOrDefaultAsync(m => m.Пользователь_Key == Пользователь_Key);
 
         if (пользовательсхемапредприятия is null)
         {
