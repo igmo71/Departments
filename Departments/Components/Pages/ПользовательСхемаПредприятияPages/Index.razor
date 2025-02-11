@@ -6,30 +6,39 @@
 @implements IAsyncDisposable
 @inject IDbContextFactory<Departments.Data.AppDbContext> DbFactory
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Пользователи</PageTitle>
 
-<h1>Index</h1>
+<h1>Пользователи</h1>
 
-<p>
+@* <p>
     <a href="пользовательсхемапредприятияs/create">Create New</a>
-</p>
+</p> *@
 
-<QuickGrid Class="table" Items="context.ПользовательСхемаПредприятия">
-    <PropertyColumn Property="пользовательсхемапредприятия => пользовательсхемапредприятия.СхемаПредприятия_Key" />
+<QuickGrid Class="table" Items="itemsQuery">
+    <PropertyColumn Sortable="true" Title="Пользователь" Property="пользовательсхемапредприятия =>
+        пользовательсхемапредприятия.Пользователь == null ? string.Empty : пользовательсхемапредприятия.Пользователь.Description" />
+    <PropertyColumn Sortable="true" Title="СхемаПредприятия" Property="пользовательсхемапредприятия =>
+        пользовательсхемапредприятия.СхемаПредприятия == null ? string.Empty : пользовательсхемапредприятия.СхемаПредприятия.Description" />
 
-    <TemplateColumn Context="пользовательсхемапредприятия">
+    @* <TemplateColumn Context="пользовательсхемапредприятия">
         <a href="@($"пользовательсхемапредприятияs/edit?пользователь_key={пользовательсхемапредприятия.Пользователь_Key}")">Edit</a> |
         <a href="@($"пользовательсхемапредприятияs/details?пользователь_key={пользовательсхемапредприятия.Пользователь_Key}")">Details</a> |
         <a href="@($"пользовательсхемапредприятияs/delete?пользователь_key={пользовательсхемапредприятия.Пользователь_Key}")">Delete</a>
-    </TemplateColumn>
+    </TemplateColumn> *@
 </QuickGrid>
 
 @code {
     private AppDbContext context = default!;
+    private IQueryable<ПользовательСхемаПредприятия> itemsQuery = default!;
 
     protected override void OnInitialized()
     {
         context = DbFactory.CreateDbContext();
+
+        itemsQuery = context.ПользовательСхемаПредприятия
+            .AsNoTracking()
+            .Include(e => e.СхемаПредприятия)
+            .Include(e => e.Пользователь);
     }
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();

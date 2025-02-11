@@ -7,7 +7,7 @@
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using Microsoft.EntityFrameworkCore
-
+@using System.Diagnostics
 
 @implements IAsyncDisposable
 
@@ -16,58 +16,95 @@
 
 <h2>Схема Предприятия</h2>
 <hr />
-<Microsoft.FluentUI.AspNetCore.Components.FluentDragContainer TItem="string" OnDropEnd="@(async e => await Droped(e))">
+
+<Microsoft.FluentUI.AspNetCore.Components.FluentDragContainer TItem="string"
+OnDragStart="eventArgs => DragStart(eventArgs)"
+OnDropEnd="@(async eventArgs => await DropEnd(eventArgs))">
     <div class="row">
         <div class="col">
+            <div class="mb-2">
                 <button class="btn btn-outline-primary" @onclick="ExpandAll"><Folder2OpenIcon /> Открыть Все </button>
+                <button class="btn btn-outline-primary" @onclick="CloseAll"><FolderIcon></FolderIcon> Закрыть Все </button>
+            </div>
             <div class="overflow-auto" style="max-height: 800px;">
                 <TreeView TreeItems="treeItems">
                     <TreeItemTemplate Context="treeItem">
-                        <Microsoft.FluentUI.AspNetCore.Components.FluentDropZone Id="@treeItem.Id" Draggable="true" Droppable="true">
+
+                        <Microsoft.FluentUI.AspNetCore.Components.FluentDropZone Id="@treeItem.Id" Draggable="false" Droppable="true">
+
                             <div class="d-flex flex-row @(treeItem.Id == selectedTreeItemId ? "bg-body-secondary" : string.Empty)">
                                 <div class="btn" @onclick="() => ExpandItem(treeItem)">
                                     <TreeIcons TreeItem="treeItem" />
                                 </div>
                                 <div class="btn text-start" @onclick="() => SelectItem(treeItem)">@treeItem.Value</div>
                             </div>
+
                         </Microsoft.FluentUI.AspNetCore.Components.FluentDropZone>
+
                     </TreeItemTemplate>
                 </TreeView>
             </div>
         </div>
         <div class="col">
+            <div class="mb-2">
+                <button class="btn btn-outline-primary" @onclick="GetUnusedПользователи"><PeopleIcon /> Показать не назначенных Пользователей </button>
+            </div>
             <div class="overflow-auto" style="max-height: 800px;">
                 @if (selectedTreeItemId != null)
                 {
-                    <p>
+                    <div>
                         <h4>@selectedTreeItem?.Value</h4>
-                    </p>
-                    <p>
+                    </div>
+                    <div>
                         <a href="@($"/пользовательсхемапредприятияs/create?СхемаПредприятия_Key={selectedTreeItemId}")">
-                            Добавить Пользователя
+                            <PersonPlusIcon /> Добавить Пользователя
                         </a>
-                    </p>
+                    </div>
                     <QuickGrid @ref="qGrid" Class="table" Items="queryПользователиСхемаПредприятия">
                         <TemplateColumn Context="item">
-                            <Microsoft.FluentUI.AspNetCore.Components.FluentDropZone Id="@item.Пользователь_Key" Draggable="true" Droppable="true">
+
+                            <Microsoft.FluentUI.AspNetCore.Components.FluentDropZone Id="@item.Пользователь_Key" Draggable="true" Droppable="false">
+
                                 <a class="btn"><GripVerticalIcon /> @item.Пользователь?.Description </a>
+
                             </Microsoft.FluentUI.AspNetCore.Components.FluentDropZone>
+
                         </TemplateColumn>
                         @* <PropertyColumn Property="item => item.Пользователь == null ? string.Empty : item.Пользователь.Description" Title="" /> *@
                         <TemplateColumn Context="item">
                             @if (item.СхемаПредприятия != null && item.Пользователь != null)
                             {
-                                <a href="@($"/пользовательсхемапредприятияs/edit?СхемаПредприятия_Key={item.СхемаПредприятия_Key}&Пользователь_Key={item.Пользователь.Ref_Key}")">
-                                    Переместить
-                                </a>
-                                <span> | </span>
                                 <a href="@($"/пользовательсхемапредприятияs/delete?СхемаПредприятия_Key={item.СхемаПредприятия_Key}&Пользователь_Key={item.Пользователь.Ref_Key}")">
-                                    Удалить
+                                    <Trash3Icon /> Удалить
                                 </a>
                             }
                         </TemplateColumn>
                     </QuickGrid>
                 }
+                else if (unusedПользователи != null)
+                {
+                    <div>
+                        <h4>Не назначенные Пользователи</h4>
+                    </div>
+                    <table class="table">
+                        <tbody>
+                            @foreach (var item in unusedПользователи)
+                            {
+                                <tr>
+                                    <td>
+                                        <Microsoft.FluentUI.AspNetCore.Components.FluentDropZone Id="@item.Ref_Key" Draggable="true" Droppable="false">
+
+                                            <a class="btn"><GripVerticalIcon /> @item.Description </a>
+
+                                        </Microsoft.FluentUI.AspNetCore.Components.FluentDropZone>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                }
+
             </div>
         </div>
     </div>
@@ -79,10 +116,12 @@
     private QuickGrid<ПользовательСхемаПредприятия>? qGrid;
 
     List<CatalogСхемаПредприятия>? originalItems;
+    private List<TreeItem>? treeItemsPlainList;
     private List<TreeItem>? treeItems;
     private TreeItem? selectedTreeItem;
     private string? selectedTreeItemId;
     private List<string>? expandedTreeItemsId;
+    private List<CatalogПользователи>? unusedПользователи;
 
     protected override async Task OnInitializedAsync()
     {
@@ -91,7 +130,7 @@
         await GetTreeItems();
     }
 
-    private async Task GetTreeItems()
+    private async Task GetTreeItems(bool? isExpandAll = null)
     {
         originalItems = await context.CatalogСхемаПредприятия
         .AsNoTracking()
@@ -99,11 +138,24 @@
         .OrderBy(e => e.Description)
         .ToListAsync();
 
-        var list = From(originalItems);
+        treeItemsPlainList = From(originalItems);
 
-        var restoredStateList = await ResoreTreeState(list);
+        if (isExpandAll is null)
+        {
+            treeItemsPlainList = await ResoreTreeState(treeItemsPlainList);
+        }
+        else if (isExpandAll == true)
+        {
+            foreach (var item in treeItemsPlainList)
+                item.IsExpanded = true;
+        }
+        else if (isExpandAll == false)
+        {
+            foreach (var item in treeItemsPlainList)
+                item.IsExpanded = false;
+        }
 
-        treeItems = TreeBuilder.Build(restoredStateList);
+        treeItems = TreeBuilder.Build(treeItemsPlainList);
     }
 
     private List<TreeItem> From(List<CatalogСхемаПредприятия> originalItems)
@@ -162,7 +214,8 @@
             expandedTreeItemsId.Remove(treeItem.Id);
         }
 
-        await ProtectedSessionStore.SetAsync(nameof(expandedTreeItemsId), expandedTreeItemsId);
+        if (expandedTreeItemsId is not null)
+            await ProtectedSessionStore.SetAsync(nameof(expandedTreeItemsId), expandedTreeItemsId);
     }
 
     private async Task SelectItem(TreeItem treeItem)
@@ -184,29 +237,88 @@
             .Include(e => e.СхемаПредприятия);
     }
 
-    private async Task Droped(Microsoft.FluentUI.AspNetCore.Components.FluentDragEventArgs<string> eventArgs)
+    private void GetUnusedПользователи()
     {
-        context.ПользовательСхемаПредприятия
-            .Where(e => e.Пользователь_Key == eventArgs.Source.Id)
-            .ExecuteUpdate(setters => setters.
-                SetProperty(p => p.СхемаПредприятия_Key, eventArgs.Target.Id));
+        using var context = DbFactory.CreateDbContext();
 
-        expandedTreeItemsId ??= [];
-        expandedTreeItemsId.Add(eventArgs.Target.Id);
-        await ProtectedSessionStore.SetAsync(nameof(expandedTreeItemsId), expandedTreeItemsId);
+        var keys = context.ПользовательСхемаПредприятия
+            .AsNoTracking()
+            .Select(e => e.Пользователь_Key)
+            .ToList();
 
-        selectedTreeItemId = eventArgs.Target.Id;
-        await ProtectedSessionStore.SetAsync(nameof(selectedTreeItemId), selectedTreeItemId);
+        unusedПользователи = context.CatalogПользователи
+            .AsNoTracking()
+            .AsEnumerable()
+            .Where(u => !keys.Contains(u.Ref_Key))
+            .OrderBy(e => e.Description)
+            .ToList();
+
+        selectedTreeItemId = null;
+
+    }
+
+    private void DragStart(Microsoft.FluentUI.AspNetCore.Components.FluentDragEventArgs<string> eventArgs)
+    {
+        Debug.WriteLine($"DragStart: {eventArgs.Source.Id}");
+    }
+
+    private async Task DropEnd(Microsoft.FluentUI.AspNetCore.Components.FluentDragEventArgs<string> eventArgs)
+    {
+        if (selectedTreeItemId == null)
+        {
+            var newItem = new ПользовательСхемаПредприятия()
+                {
+                    Пользователь_Key = eventArgs.Source.Id,
+                    СхемаПредприятия_Key = eventArgs.Target.Id
+                };
+            context.ПользовательСхемаПредприятия.Add(newItem);
+            context.SaveChanges();
+            GetUnusedПользователи();
+        }
+        else
+        {
+            context.ПользовательСхемаПредприятия
+                .Where(e => e.Пользователь_Key == eventArgs.Source.Id)
+                .ExecuteUpdate(setters => setters.
+                    SetProperty(p => p.СхемаПредприятия_Key, eventArgs.Target.Id));
+        }
 
         await GetTreeItems();
 
-        await qGrid.RefreshDataAsync();
+        if (qGrid != null)
+            await qGrid.RefreshDataAsync();
+    }
 
-        StateHasChanged();
+    private async Task ExpandAll(MouseEventArgs e)
+    {
+        await GetTreeItems(isExpandAll: true);
+    }
+
+    private async Task CloseAll(MouseEventArgs e)
+    {
+        await GetTreeItems(isExpandAll: false);
+
+        await ProtectedSessionStore.DeleteAsync(nameof(expandedTreeItemsId));
     }
 
     public async ValueTask DisposeAsync()
     {
         await context.DisposeAsync();
     }
+
+    // private void DragStart(DragEventArgs ev, string id)
+    // {
+    //     ev.DataTransfer.DropEffect = "move";
+    //     Debug.WriteLine($"DragStart: {id}");
+    // }
+
+    // private void DragOver(DragEventArgs ev, string id)
+    // {
+    //     Debug.WriteLine($"DragOver: {id}");
+    // }
+
+    // private void Drop(DragEventArgs ev, string id)
+    // {
+    //     Debug.WriteLine($"Drop: {id}");
+    // }
 }
