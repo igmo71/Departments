@@ -19,6 +19,7 @@
 <Microsoft.FluentUI.AspNetCore.Components.FluentDragContainer TItem="string" OnDropEnd="@(async e => await Droped(e))">
     <div class="row">
         <div class="col">
+                <button class="btn btn-outline-primary" @onclick="ExpandAll"><Folder2OpenIcon /> Открыть Все </button>
             <div class="overflow-auto" style="max-height: 800px;">
                 <TreeView TreeItems="treeItems">
                     <TreeItemTemplate Context="treeItem">
