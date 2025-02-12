@@ -12,11 +12,12 @@
 <p>Вы уверены, что хотите удалить?</p>
 <div>
     <h4>Привязку Пользователя к Схеме Предприятия</h4>
-    <span class="text-warning"> <ExclamationTriangleIcon /> Пользователь из справочника не удалится, а перейдет в категорию не назначенных. </span>
     <hr />
+
+    <div class="alert alert-warning"><ExclamationTriangleIcon /> @message1</div>
     @if (пользовательсхемапредприятия is null)
     {
-        <p><em>Loading...</em></p>
+        <p><em>Загрузка...</em></p>
     }
     else
     {
@@ -40,6 +41,8 @@
 
     [SupplyParameterFromQuery]
     private string? Пользователь_Key { get; set; }
+
+    private string message1 = "Пользователь из справочника не удалится, а перейдет в категорию не назначенных.";
 
     protected override async Task OnInitializedAsync()
     {

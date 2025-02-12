@@ -14,7 +14,7 @@
     <a href="catalogсхемапредприятияs/create">Create New</a>
 </p>
 
-<QuickGrid Class="table" Items="context.CatalogСхемаПредприятия">
+<QuickGrid Class="table" Items="itemsQuery">
     <PropertyColumn Property="catalogсхемапредприятия => catalogсхемапредприятия.DeletionMark" />
     <PropertyColumn Property="catalogсхемапредприятия => catalogсхемапредприятия.Ref_Key" />
     <PropertyColumn Property="catalogсхемапредприятия => catalogсхемапредприятия.Parent_Key" />
@@ -29,10 +29,14 @@
 
 @code {
     private AppDbContext context = default!;
+    private IQueryable<CatalogСхемаПредприятия> itemsQuery = default!;
 
     protected override void OnInitialized()
     {
         context = DbFactory.CreateDbContext();
+
+        itemsQuery = context.CatalogСхемаПредприятия.AsNoTracking();
+        ;
     }
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();

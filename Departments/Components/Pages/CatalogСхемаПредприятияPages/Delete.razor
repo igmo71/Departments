@@ -1,37 +1,52 @@
 ﻿@page "/catalogсхемапредприятияs/delete"
+
+@using Departments.Components.Icons
 @using Microsoft.EntityFrameworkCore
 @using Departments.Domain
+
 @inject IDbContextFactory<Departments.Data.AppDbContext> DbFactory
 @inject NavigationManager NavigationManager
 
-<PageTitle>Delete</PageTitle>
+<PageTitle>Удалить</PageTitle>
 
-<h1>Delete</h1>
+<h2>Удалить</h2>
 
-<p>Are you sure you want to delete this?</p>
+<p>Выуверены, что хотите удалить?</p>
+
 <div>
-    <h2>CatalogСхемаПредприятия</h2>
+    <h4>Отдел из Схемы Предприятия</h4>
     <hr />
+
+    @if (!string.IsNullOrEmpty(pageMessage))
+    {
+        <div class="alert alert-danger"><ExclamationOctagonIcon /> <span> @pageMessage</span></div>
+    }
+    else{
+        <div class="alert alert-danger"><ExclamationOctagonIcon /> @message1</div>
+        <div class="alert alert-warning"><ExclamationTriangleIcon /> @message2</div>
+    }
+
     @if (catalogсхемапредприятия is null)
     {
-        <p><em>Loading...</em></p>
+        <p><em>Загрузка...</em></p>
     }
-    else {
+    else
+    {
         <dl class="row">
-            <dt class="col-sm-2">DeletionMark</dt>
-            <dd class="col-sm-10">@catalogсхемапредприятия.DeletionMark</dd>
+            <dt class="col-sm-2">Родительский Отдел</dt>
+            <dd class="col-sm-10">@parent?.Description</dd>
         </dl>
         <dl class="row">
-            <dt class="col-sm-2">Parent_Key</dt>
-            <dd class="col-sm-10">@catalogсхемапредприятия.Parent_Key</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">Description</dt>
+            <dt class="col-sm-2">Наименование этого</dt>
             <dd class="col-sm-10">@catalogсхемапредприятия.Description</dd>
         </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Пометка удаления</dt>
+            <dd class="col-sm-10">@catalogсхемапредприятия.DeletionMark</dd>
+        </dl>
         <EditForm method="post" Model="catalogсхемапредприятия" OnValidSubmit="DeleteCatalogСхемаПредприятия" FormName="delete" Enhance>
-            <button type="submit" class="btn btn-danger" disabled="@(catalogсхемапредприятия is null)">Delete</button> |
-            <a href="/catalogсхемапредприятияs">Back to List</a>
+            <button type="submit" class="btn btn-danger" disabled="@(catalogсхемапредприятия is null)">Удалить</button> |
+            <a href="/catalogсхемапредприятияs/tree">Назад к Списку</a>
         </EditForm>
     }
 </div>
@@ -40,24 +55,46 @@
     private CatalogСхемаПредприятия? catalogсхемапредприятия;
 
     [SupplyParameterFromQuery]
-    private string Ref_Key { get; set; }
+    private string? Ref_Key { get; set; }
+
+    private CatalogСхемаПредприятия? parent;
+    private string pageMessage = string.Empty;
+    private string message1 = "Отдел удалится навсегда! Возможно, следует изменить Отдел, установив Пометку удаления.";
+    private string message2 = "Не забудьте удалить или перенести Пользователей из этого Отдела";
 
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        catalogсхемапредприятия = await context.CatalogСхемаПредприятия.FirstOrDefaultAsync(m => m.Ref_Key == Ref_Key);
+
+        catalogсхемапредприятия = await context.CatalogСхемаПредприятия
+            .FirstOrDefaultAsync(m => m.Ref_Key == Ref_Key);
 
         if (catalogсхемапредприятия is null)
         {
             NavigationManager.NavigateTo("notfound");
+        }
+        else
+        {
+            parent = await context.CatalogСхемаПредприятия
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.Ref_Key == catalogсхемапредприятия.Parent_Key);
         }
     }
 
     private async Task DeleteCatalogСхемаПредприятия()
     {
         using var context = DbFactory.CreateDbContext();
+
+        if (context.CatalogСхемаПредприятия.Any(e => e.Parent_Key == catalogсхемапредприятия!.Ref_Key))
+        {
+            pageMessage = "У этого отдела есть подотделы, нужно сначала удалить их";
+            return;
+        }
+
         context.CatalogСхемаПредприятия.Remove(catalogсхемапредприятия!);
+
         await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/catalogсхемапредприятияs");
+
+        NavigationManager.NavigateTo("/catalogсхемапредприятияs/tree");
     }
 }

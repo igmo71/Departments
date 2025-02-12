@@ -4,15 +4,15 @@
 @inject IDbContextFactory<Departments.Data.AppDbContext> DbFactory
 @inject NavigationManager NavigationManager
 
-<PageTitle>Edit</PageTitle>
+<PageTitle>Изменить</PageTitle>
 
-<h1>Edit</h1>
+<h2>Изменить</h2>
 
-<h2>CatalogСхемаПредприятия</h2>
+<h4>Отдел в Схеме Предприятия</h4>
 <hr />
 @if (CatalogСхемаПредприятия is null)
 {
-    <p><em>Loading...</em></p>
+    <p><em>Загрузка...</em></p>
 }
 else
 {
@@ -20,39 +20,44 @@ else
         <div class="col-md-4">
             <EditForm method="post" Model="CatalogСхемаПредприятия" OnValidSubmit="UpdateCatalogСхемаПредприятия" FormName="edit" Enhance>
                 <DataAnnotationsValidator />
-                <ValidationSummary role="alert"/>
+                <ValidationSummary role="alert" />
+
                 <input type="hidden" name="CatalogСхемаПредприятия.Ref_Key" value="@CatalogСхемаПредприятия.Ref_Key" />
+                
                 <div class="mb-3">
-                    <label for="deletionmark" class="form-label">DeletionMark:</label>
-                    <InputCheckbox id="deletionmark" @bind-Value="CatalogСхемаПредприятия.DeletionMark" class="form-check-input" />
-                    <ValidationMessage For="() => CatalogСхемаПредприятия.DeletionMark" class="text-danger" />
+                    <label for="parent_key" class="form-label">Родительский Отдел:</label>
+                   @*  <InputText id="parent_key" @bind-Value="CatalogСхемаПредприятия.Parent_Key" class="form-control" />
+                    <ValidationMessage For="() => CatalogСхемаПредприятия.Parent_Key" class="text-danger" /> *@
+                        <input type="text" value="@parent?.Description" class="form-control" disabled />
                 </div>
                 <div class="mb-3">
-                    <label for="parent_key" class="form-label">Parent_Key:</label>
-                    <InputText id="parent_key" @bind-Value="CatalogСхемаПредприятия.Parent_Key" class="form-control" />
-                    <ValidationMessage For="() => CatalogСхемаПредприятия.Parent_Key" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="description" class="form-label">Description:</label>
+                    <label for="description" class="form-label">Наименование:</label>
                     <InputText id="description" @bind-Value="CatalogСхемаПредприятия.Description" class="form-control" />
                     <ValidationMessage For="() => CatalogСхемаПредприятия.Description" class="text-danger" />
                 </div>
-                <button type="submit" class="btn btn-primary">Save</button>
+                <div class="mb-3">
+                    <label for="deletionmark" class="form-label">Пометка Удаления:</label>
+                    <InputCheckbox id="deletionmark" @bind-Value="CatalogСхемаПредприятия.DeletionMark" class="form-check-input" />
+                    <ValidationMessage For="() => CatalogСхемаПредприятия.DeletionMark" class="text-danger" />
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary">Сохранить</button> |
+                    <a href="/catalogсхемапредприятияs/tree">Назад к Списку</a>
+                </div>
+
             </EditForm>
         </div>
     </div>
 }
 
-<div>
-    <a href="/catalogсхемапредприятияs">Back to List</a>
-</div>
-
 @code {
     [SupplyParameterFromQuery]
-    private string Ref_Key { get; set; }
+    private string? Ref_Key { get; set; }
 
     [SupplyParameterFromForm]
     private CatalogСхемаПредприятия? CatalogСхемаПредприятия { get; set; }
+
+    private CatalogСхемаПредприятия? parent;
 
     protected override async Task OnInitializedAsync()
     {
@@ -63,10 +68,14 @@ else
         {
             NavigationManager.NavigateTo("notfound");
         }
+        else
+        {
+            parent = await context.CatalogСхемаПредприятия
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.Ref_Key == CatalogСхемаПредприятия.Parent_Key);
+        }
     }
 
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
     private async Task UpdateCatalogСхемаПредприятия()
     {
         using var context = DbFactory.CreateDbContext();
@@ -88,7 +97,7 @@ else
             }
         }
 
-        NavigationManager.NavigateTo("/catalogсхемапредприятияs");
+        NavigationManager.NavigateTo("/catalogсхемапредприятияs/tree");
     }
 
     private bool CatalogСхемаПредприятияExists(string ref_key)

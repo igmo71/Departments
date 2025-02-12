@@ -18,13 +18,17 @@
 <hr />
 
 <Microsoft.FluentUI.AspNetCore.Components.FluentDragContainer TItem="string"
-OnDragStart="eventArgs => DragStart(eventArgs)"
-OnDropEnd="@(async eventArgs => await DropEnd(eventArgs))">
+                                                              OnDragStart="eventArgs => DragStart(eventArgs)"
+                                                              OnDropEnd="@(async eventArgs => await DropEnd(eventArgs))">
     <div class="row">
         <div class="col">
             <div class="mb-2">
-                <button class="btn btn-outline-primary" @onclick="ExpandAll"><Folder2OpenIcon /> Открыть Все </button>
-                <button class="btn btn-outline-primary" @onclick="CloseAll"><FolderIcon></FolderIcon> Закрыть Все </button>
+                <button class="btn btn-outline-primary rounded-pill" @onclick="ExpandAll">
+                    <Folder2OpenIcon /> Открыть Все
+                </button>
+                <button class="btn btn-outline-primary rounded-pill" @onclick="CloseAll">
+                    <FolderIcon /> Закрыть Все
+                </button>
             </div>
             <div class="overflow-auto" style="max-height: 800px;">
                 <TreeView TreeItems="treeItems">
@@ -33,10 +37,23 @@ OnDropEnd="@(async eventArgs => await DropEnd(eventArgs))">
                         <Microsoft.FluentUI.AspNetCore.Components.FluentDropZone Id="@treeItem.Id" Draggable="false" Droppable="true">
 
                             <div class="d-flex flex-row @(treeItem.Id == selectedTreeItemId ? "bg-body-secondary" : string.Empty)">
-                                <div class="btn" @onclick="() => ExpandItem(treeItem)">
-                                    <TreeIcons TreeItem="treeItem" />
+
+                                <div class="btn-group">
+                                    <div class="btn" @onclick="() => ExpandItem(treeItem)">
+                                        <TreeIcons TreeItem="treeItem" />
+                                    </div>
+                                    <div class="btn text-start" @onclick="() => SelectItem(treeItem)">@treeItem.Value</div>
+                                    <div class="btn dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="visually-hidden">Toggle Dropdown</span>
+                                    </div>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="/catalogсхемапредприятияs/create?parent_key=@treeItem.Id"><PlusLgIcon /> Добавить подотдел</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="/catalogсхемапредприятияs/edit?ref_key=@treeItem.Id"><PencilIcon /> Изменить этот</a></li>
+                                        <li><a class="dropdown-item" href="/catalogсхемапредприятияs/delete?ref_key=@treeItem.Id"><Trash3Icon /> Удалить этот</a></li>
+                                    </ul>
                                 </div>
-                                <div class="btn text-start" @onclick="() => SelectItem(treeItem)">@treeItem.Value</div>
+
                             </div>
 
                         </Microsoft.FluentUI.AspNetCore.Components.FluentDropZone>
@@ -47,7 +64,9 @@ OnDropEnd="@(async eventArgs => await DropEnd(eventArgs))">
         </div>
         <div class="col">
             <div class="mb-2">
-                <button class="btn btn-outline-primary" @onclick="GetUnusedПользователи"><PeopleIcon /> Показать не назначенных Пользователей </button>
+                <button class="btn btn-outline-primary rounded-pill" @onclick="GetUnusedПользователи">
+                    <PeopleIcon /> Показать не назначенных Пользователей
+                </button>
             </div>
             <div class="overflow-auto" style="max-height: 800px;">
                 @if (selectedTreeItemId != null)

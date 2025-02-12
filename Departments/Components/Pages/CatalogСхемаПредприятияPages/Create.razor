@@ -1,54 +1,81 @@
 ﻿@page "/catalogсхемапредприятияs/create"
+
 @using Microsoft.EntityFrameworkCore
 @using Departments.Domain
+
 @inject IDbContextFactory<Departments.Data.AppDbContext> DbFactory
 @inject NavigationManager NavigationManager
 
-<PageTitle>Create</PageTitle>
+<PageTitle>Создать</PageTitle>
 
-<h1>Create</h1>
+<h2>Создать</h2>
 
-<h2>CatalogСхемаПредприятия</h2>
+<h4>Отдел в Схеме Предприятия</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
         <EditForm method="post" Model="CatalogСхемаПредприятия" OnValidSubmit="AddCatalogСхемаПредприятия" FormName="create" Enhance>
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert"/>
+            <ValidationSummary class="text-danger" role="alert" />
+            @if (Parent_Key == null)
+            {
+                <div class="mb-3">
+                    <label for="parent_key" class="form-label">Родительский Отдел:</label>
+                    <InputText id="parent_key" @bind-Value="CatalogСхемаПредприятия.Parent_Key" class="form-control" />
+                    <ValidationMessage For="() => CatalogСхемаПредприятия.Parent_Key" class="text-danger" />
+                </div>
+            }
+            else
+            {
+                <div class="mb-3">
+                    <label for="схемапредприятия_key" class="form-label">Родительский Отдел:</label>
+                    <input id="схемапредприятия_key" class="form-control" type="text" value="@currentСхемаПредприятия?.Description" disabled />
+                </div>
+            }
             <div class="mb-3">
-                <label for="deletionmark" class="form-label">DeletionMark:</label> 
-                <InputCheckbox id="deletionmark" @bind-Value="CatalogСхемаПредприятия.DeletionMark" class="form-check-input" /> 
-                <ValidationMessage For="() => CatalogСхемаПредприятия.DeletionMark" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="parent_key" class="form-label">Parent_Key:</label> 
-                <InputText id="parent_key" @bind-Value="CatalogСхемаПредприятия.Parent_Key" class="form-control" /> 
-                <ValidationMessage For="() => CatalogСхемаПредприятия.Parent_Key" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="description" class="form-label">Description:</label> 
-                <InputText id="description" @bind-Value="CatalogСхемаПредприятия.Description" class="form-control" /> 
-                <ValidationMessage For="() => CatalogСхемаПредприятия.Description" class="text-danger" /> 
-            </div>        
-            <button type="submit" class="btn btn-primary">Create</button>
+                <label for="description" class="form-label">Наименование нового:</label>
+                <InputText id="description" @bind-Value="CatalogСхемаПредприятия.Description" class="form-control" />
+                <ValidationMessage For="() => CatalogСхемаПредприятия.Description" class="text-danger" />
+            </div>
+            <div>
+                <button type="submit" class="btn btn-primary">Создать</button> |
+                <a href="/catalogсхемапредприятияs/tree">Назад к Списку</a>
+            </div>
         </EditForm>
     </div>
 </div>
 
-<div>
-    <a href="/catalogсхемапредприятияs">Back to List</a>
-</div>
 
 @code {
-    [SupplyParameterFromForm]
-    private CatalogСхемаПредприятия CatalogСхемаПредприятия { get; set; } = new(){Ref_Key = Guid.CreateVersion7().ToString()};
+    [SupplyParameterFromQuery]
+    public string? Parent_Key { get; set; }
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    [SupplyParameterFromForm]
+    private CatalogСхемаПредприятия CatalogСхемаПредприятия { get; set; } = new() { Ref_Key = Guid.CreateVersion7().ToString() };
+
+    private CatalogСхемаПредприятия? currentСхемаПредприятия;
+
+    protected override void OnInitialized()
+    {
+        CatalogСхемаПредприятия.Parent_Key = Parent_Key;
+
+        GetCurrentСхемаПредприятия();
+    }
+
+    private void GetCurrentСхемаПредприятия()
+    {
+        using var context = DbFactory.CreateDbContext();
+
+        currentСхемаПредприятия = context.CatalogСхемаПредприятия
+            .AsNoTracking()
+            .FirstOrDefault(e => e.Ref_Key == Parent_Key);
+    }
+
     private async Task AddCatalogСхемаПредприятия()
     {
         using var context = DbFactory.CreateDbContext();
         context.CatalogСхемаПредприятия.Add(CatalogСхемаПредприятия);
         await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/catalogсхемапредприятияs");
+        NavigationManager.NavigateTo("/catalogсхемапредприятияs/tree");
     }
 }
