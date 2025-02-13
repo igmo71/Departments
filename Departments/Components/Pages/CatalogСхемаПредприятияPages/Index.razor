@@ -18,7 +18,7 @@
     <PropertyColumn Property="catalogсхемапредприятия => catalogсхемапредприятия.DeletionMark" />
     <PropertyColumn Property="catalogсхемапредприятия => catalogсхемапредприятия.Ref_Key" />
     <PropertyColumn Property="catalogсхемапредприятия => catalogсхемапредприятия.Parent_Key" />
-    <PropertyColumn Property="catalogсхемапредприятия => catalogсхемапредприятия.Description" />
+    <PropertyColumn Property="catalogсхемапредприятия => catalogсхемапредприятия.Description" Sortable="true" />
 
     <TemplateColumn Context="catalogсхемапредприятия">
         <a href="@($"catalogсхемапредприятияs/edit?ref_key={catalogсхемапредприятия.Ref_Key}")">Edit</a> |
@@ -36,7 +36,6 @@
         context = DbFactory.CreateDbContext();
 
         itemsQuery = context.CatalogСхемаПредприятия.AsNoTracking();
-        ;
     }
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();

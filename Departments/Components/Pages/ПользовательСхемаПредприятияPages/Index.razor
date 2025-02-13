@@ -13,11 +13,11 @@
 @* <p>
     <a href="пользовательсхемапредприятияs/create">Create New</a>
 </p> *@
-
-<QuickGrid Class="table" Items="itemsQuery">
-    <PropertyColumn Sortable="true" Title="Пользователь" Property="пользовательсхемапредприятия =>
+@* Items="itemsQuery" *@
+<QuickGrid Class="table" ItemsProvider="itemsProvider">
+    <PropertyColumn Title="Пользователь" Sortable="true" Property="пользовательсхемапредприятия =>
         пользовательсхемапредприятия.Пользователь == null ? string.Empty : пользовательсхемапредприятия.Пользователь.Description" />
-    <PropertyColumn Sortable="true" Title="СхемаПредприятия" Property="пользовательсхемапредприятия =>
+    <PropertyColumn Title="СхемаПредприятия" Sortable="true" Property="пользовательсхемапредприятия =>
         пользовательсхемапредприятия.СхемаПредприятия == null ? string.Empty : пользовательсхемапредприятия.СхемаПредприятия.Description" />
 
     @* <TemplateColumn Context="пользовательсхемапредприятия">
@@ -29,16 +29,44 @@
 
 @code {
     private AppDbContext context = default!;
-    private IQueryable<ПользовательСхемаПредприятия> itemsQuery = default!;
+    //private IQueryable<ПользовательСхемаПредприятия> itemsQuery = default!;
+    GridItemsProvider<ПользовательСхемаПредприятия>? itemsProvider;
 
     protected override void OnInitialized()
     {
         context = DbFactory.CreateDbContext();
 
-        itemsQuery = context.ПользовательСхемаПредприятия
-            .AsNoTracking()
-            .Include(e => e.СхемаПредприятия)
-            .Include(e => e.Пользователь);
+        // itemsQuery = context.ПользовательСхемаПредприятия
+        //     .AsNoTracking()
+        //     .Include(e => e.СхемаПредприятия)
+        //     .Include(e => e.Пользователь);
+
+
+        itemsProvider = async request =>
+        {
+            var query = context.ПользовательСхемаПредприятия.AsNoTracking();
+
+            //request.ApplySorting(query);
+            if (request.SortByColumn != null)
+            {
+                var sortExpression = ((PropertyColumn<ПользовательСхемаПредприятия, string>)request.SortByColumn)?.Property;
+                if (sortExpression != null)
+                {
+                    if (request.SortByAscending)
+                        query = query.OrderBy(sortExpression);
+                    else
+                        query = query.OrderByDescending(sortExpression);
+                }
+            }
+
+            var result = await query
+         .Include(e => e.СхемаПредприятия)
+         .Include(e => e.Пользователь).ToListAsync();
+
+            var response = GridItemsProviderResult.From(items: result, totalItemCount: result.Count);
+
+            return response;
+        };
     }
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();

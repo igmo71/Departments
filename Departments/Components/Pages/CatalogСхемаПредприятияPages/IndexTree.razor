@@ -152,10 +152,10 @@
     private async Task GetTreeItems(bool? isExpandAll = null)
     {
         originalItems = await context.CatalogСхемаПредприятия
-        .AsNoTracking()
-        .Where(e => e.DeletionMark == false)
-        .OrderBy(e => e.Description)
-        .ToListAsync();
+            .AsNoTracking()
+            .Where(e => e.DeletionMark == false)
+            .OrderBy(e => e.Description)
+            .ToListAsync();
 
         treeItemsPlainList = From(originalItems);
 
